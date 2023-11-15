@@ -14,14 +14,13 @@ export async function createUserAccount(user: INewUser) {
         if (!newAccount) throw Error;
         const avatarUrl = avatars.getInitials(user.name);
 
-        const newUser = await saveUserToDB({
+        return await saveUserToDB({
             accountId: newAccount.$id,
             name: newAccount.name,
             email: newAccount.email,
             username: user.username,
             imageUrl: avatarUrl,
         });
-        return newUser;
     } catch (e) {
         console.log(e);
         return e;
@@ -36,14 +35,12 @@ export async function saveUserToDB(user: {
     username?: string;
 }) {
     try {
-        const newUser = await databases.createDocument(
+        return await databases.createDocument(
             appWriteConfig.databaseId,
             appWriteConfig.userCollectionId,
             ID.unique(),
             user
         );
-
-        return newUser;
     } catch (error) {
         console.log(error);
     }
@@ -51,9 +48,7 @@ export async function saveUserToDB(user: {
 
 export async function signInAccount(user: { email: string; password: string }) {
     try {
-        const session = await account.createEmailSession(user.email, user.password);
-
-        return session;
+        return await account.createEmailSession(user.email, user.password);
     } catch (e) {
         console.log(e);
     }
@@ -73,5 +68,14 @@ export async function getCurrentUser() {
     } catch (e) {
         console.log(e);
         return null;
+    }
+}
+
+export async function signOutAccount() {
+    try {
+        return await account.deleteSession('current')
+    }
+    catch (e) {
+        console.log(e)
     }
 }
