@@ -24,7 +24,6 @@ const TopBar = () => {
                         height={325}
                     />
                 </Link>
-
                 <div className="flex gap-4">
                     <Button
                         variant="ghost"
@@ -36,7 +35,7 @@ const TopBar = () => {
                           className='flex-center gap-3'
                     >
                         <img
-                            src={user.imageUrl || '/assets/images/profile-placeholder.svg'}
+                            src={user.imageUrl || '/assets/icons/profile-placeholder.svg'}
                             alt='profileImage'
                             className='h-8 w-8 rounded-full'
                         />

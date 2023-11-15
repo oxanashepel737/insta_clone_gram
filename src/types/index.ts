@@ -1,3 +1,5 @@
+import React from "react";
+
 export type INewUser = {
     name: string;
     email: string;
@@ -21,4 +23,10 @@ export type IContextType = {
     isAuthenticated: boolean;
     setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
     checkAuthUser: () => Promise<boolean>;
+};
+
+export type INavLink = {
+    imgURL: string;
+    route: string;
+    label: string;
 };
