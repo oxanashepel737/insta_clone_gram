@@ -1,7 +1,13 @@
 import {ID, Query} from 'appwrite';
-import {INewUser} from "@/types";
-import {account, appWriteConfig, avatars, databases} from "@/lib/appwrite/config.ts";
+import {INewPost, INewUser} from "@/types";
+import {account, appWriteConfig, avatars, databases, storage} from "@/lib/appwrite/config.ts";
 
+
+// ============================================================
+// AUTH
+// ============================================================
+
+// ============================== SIGN UP
 export async function createUserAccount(user: INewUser) {
     try {
         const newAccount = await account.create(
@@ -27,6 +33,7 @@ export async function createUserAccount(user: INewUser) {
     }
 }
 
+// ============================== SAVE USER TO DB
 export async function saveUserToDB(user: {
     accountId: string;
     email: string;
@@ -46,6 +53,7 @@ export async function saveUserToDB(user: {
     }
 }
 
+// ============================== SIGN IN
 export async function signInAccount(user: { email: string; password: string }) {
     try {
         return await account.createEmailSession(user.email, user.password);
@@ -54,7 +62,7 @@ export async function signInAccount(user: { email: string; password: string }) {
     }
 }
 
-
+// ============================== GET USER
 export async function getCurrentUser() {
     try {
         const currentAccount = await account.get();
@@ -71,11 +79,96 @@ export async function getCurrentUser() {
     }
 }
 
+// ============================== SIGN OUT
 export async function signOutAccount() {
     try {
         return await account.deleteSession('current')
+    } catch (e) {
+        console.log(e)
     }
-    catch (e) {
+}
+
+// ============================================================
+// POSTS
+// ============================================================
+
+// ============================== CREATE POST
+export async function createPost(post: INewPost) {
+    try {
+        //Upload image to storage
+        const uploadedFile = await uploadFile(post.file[0]);
+        if (!uploadedFile) throw Error;
+
+        // Get file url
+        const fileUrl = getFilePreview(uploadedFile.$id);
+        if (!fileUrl) {
+            deleteFile(uploadedFile.$id)
+            throw Error;
+        }
+        // Convert tags into an array
+        const tags = post.tags?.replace(/ /g, '').split(',') || [];
+        // Save post to database
+        const newPost = await databases.createDocument(
+            appWriteConfig.databaseId,
+            appWriteConfig.postCollectionId,
+            ID.unique(),
+            {
+                creator: post.userId,
+                caption: post.caption,
+                imageUrl: fileUrl,
+                imageId: uploadedFile.$id,
+                location: post.location,
+                tags: tags
+            }
+        )
+        if(!newPost) {
+            await deleteFile(uploadedFile.$id);
+            throw Error;
+        }
+        return newPost;
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+// ============================== UPLOAD FILE
+export async function uploadFile(file: File) {
+    try {
+        return await storage.createFile(
+            appWriteConfig.storageId,
+            ID.unique(),
+            file
+        )
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+// ============================== GET FILE URL
+export async function getFilePreview(fileId: string) {
+    try {
+        return storage.getFilePreview(
+            appWriteConfig.storageId,
+            fileId,
+            2000,
+            2000,
+            'top',
+            100
+        )
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+// ============================== DELETE FILE
+export async function deleteFile(fileId: string) {
+    try {
+        await storage.deleteFile(
+            appWriteConfig.storageId,
+            fileId
+        )
+        return {status: 'ok'}
+    } catch (e) {
         console.log(e)
     }
 }

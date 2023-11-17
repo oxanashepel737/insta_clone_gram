@@ -5,7 +5,6 @@ import {Button} from "@/components/ui/button"
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -14,26 +13,44 @@ import {
 import {Input} from "@/components/ui/input"
 import {Textarea} from "@/components/ui/textarea.tsx";
 import FileUploader from "@/components/shared/FileUploader.tsx";
+import {postValidation} from "@/lib/validation";
+import {Models} from "appwrite";
+import {useCreatePost} from "@/lib/react-query/queriesAndMutations.ts";
+import {useUserContext} from "@/context/AuthContext.tsx";
+import {toast} from "@/components/ui/use-toast.ts";
+import {useNavigate} from "react-router-dom";
 
-const formSchema = z.object({
-    username: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
-    }),
-})
-const PostForm = ({post}) => {
+type PostFormProps = {
+    post?: Models.Document
+}
+const PostForm = ({post}: PostFormProps) => {
+    const {mutateAsync: createPost} = useCreatePost();
+    const {user} = useUserContext();
+    const navigate = useNavigate();
     // 1. Define your form.
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof postValidation>>({
+        resolver: zodResolver(postValidation),
         defaultValues: {
-            username: "",
+            caption: post ? post.caption : '',
+            file: [],
+            location: post ? post.location : '',
+            tags: post ? post.tags.join(',') : '',
         },
     })
 
     // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
+   async function onSubmit(values: z.infer<typeof postValidation>) {
+      const newPost = await createPost({
+          ...values,
+          userId: user.id
+      })
+        if(!newPost) {
+            toast({
+                title: 'Please try again'
+            })
+        } else {
+            navigate('/');
+        }
     }
 
     return (
@@ -85,7 +102,11 @@ const PostForm = ({post}) => {
                                 Add Location
                             </FormLabel>
                             <FormControl>
-                                <Input type='text' className='shad-input'/>
+                                <Input
+                                    type='text'
+                                    className='shad-input'
+                                    {...field}
+                                />
                             </FormControl>
                             <FormMessage className='shad-form_message'/>
                         </FormItem>
@@ -104,6 +125,7 @@ const PostForm = ({post}) => {
                                     type='text'
                                     className='shad-input'
                                     placeholder='Art, Expression, Learn'
+                                    {...field}
                                 />
                             </FormControl>
                             <FormMessage className='shad-form_message'/>
