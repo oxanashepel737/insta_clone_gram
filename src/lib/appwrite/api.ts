@@ -172,3 +172,19 @@ export async function deleteFile(fileId: string) {
         console.log(e)
     }
 }
+
+// ============================== GET POSTS
+export async function getRecentPosts() {
+    try {
+        const posts = await databases.listDocuments(
+            appWriteConfig.databaseId,
+            appWriteConfig.postCollectionId,
+            [Query.orderDesc('$createdAt'), Query.limit(20)]
+        )
+        if (!posts) throw Error;
+        return posts;
+    }
+    catch (e) {
+        console.log(e)
+    }
+}
