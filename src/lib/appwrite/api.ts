@@ -145,7 +145,7 @@ export async function uploadFile(file: File) {
 }
 
 // ============================== GET FILE URL
-export async function getFilePreview(fileId: string) {
+export function getFilePreview(fileId: string) {
     try {
         return storage.getFilePreview(
             appWriteConfig.storageId,
