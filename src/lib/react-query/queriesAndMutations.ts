@@ -5,7 +5,7 @@ import {
     getRecentPosts,
     signInAccount,
     signOutAccount,
-    likePost, savePost, deleteSavedPost, getCurrentUser
+    likePost, savePost, deleteSavedPost, getCurrentUser, getPostById
 } from "@/lib/appwrite/api.ts";
 import {INewPost, INewUser} from "@/types";
 import {QueryKeys} from "@/lib/react-query/queryKeys.ts";
@@ -112,5 +112,13 @@ export const useGetCurrentUser = () => {
     return useQuery({
         queryKey: [QueryKeys.GET_CURRENT_USER],
         queryFn: getCurrentUser
+    })
+}
+
+export const useGetPostById = (postId: string) => {
+    return useQuery({
+        queryKey: [QueryKeys.GET_POST_BY_ID, postId],
+        queryFn: () => getPostById(postId),
+        enabled: !!postId,
     })
 }

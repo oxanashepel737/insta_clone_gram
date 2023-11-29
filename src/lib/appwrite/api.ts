@@ -243,3 +243,17 @@ export async function deleteSavedPost(savedRecordId: string,) {
         console.log(e)
     }
 }
+
+// ============================== GET POST BY ID
+export async function getPostById(postId: string) {
+    try {
+        return await databases.getDocument(
+            appWriteConfig.databaseId,
+            appWriteConfig.postCollectionId,
+            postId
+        )
+    }
+    catch (e) {
+        console.log(e)
+    }
+}
