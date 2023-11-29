@@ -15,17 +15,19 @@ import {Textarea} from "@/components/ui/textarea.tsx";
 import FileUploader from "@/components/shared/FileUploader.tsx";
 import {postValidation} from "@/lib/validation";
 import {Models} from "appwrite";
-import {useCreatePost} from "@/lib/react-query/queriesAndMutations.ts";
+import {useCreatePost, useUpdatePost} from "@/lib/react-query/queriesAndMutations.ts";
 import {useUserContext} from "@/context/AuthContext.tsx";
 import {toast} from "@/components/ui/use-toast.ts";
 import {useNavigate} from "react-router-dom";
+import Loader from "@/components/shared/Loader.tsx";
 
 type PostFormProps = {
     post?: Models.Document,
     action: 'Create' | 'Update',
 }
 const PostForm = ({post, action}: PostFormProps) => {
-    const {mutateAsync: createPost} = useCreatePost();
+    const {mutateAsync: createPost, isPending: isLoadingCreate} = useCreatePost();
+    const {mutateAsync: updatePost, isPending: isLoadingUpdate} = useUpdatePost();
     const {user} = useUserContext();
     const navigate = useNavigate();
     // 1. Define your form.
@@ -41,16 +43,31 @@ const PostForm = ({post, action}: PostFormProps) => {
 
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof postValidation>) {
-        const newPost = await createPost({
-            ...values,
-            userId: user.id
-        })
-        if (!newPost) {
-            toast({
-                title: 'Please try again'
+        if(post && action === 'Update') {
+            const updatedPost = await updatePost({
+                ...values,
+                postId: post.$id,
+                imageId: post.imageId,
+                imageUrl: post.imageUrl
             })
+            if(!updatedPost) {
+                toast({
+                    title: `${action} post failed. Please try again.`,
+                })
+            }
+            navigate(`/post/${post.$id}`);
+        } else {
+            const newPost = await createPost({
+                ...values,
+                userId: user.id
+            })
+            if (!newPost) {
+                toast({
+                    title: `${action} post failed. Please try again.`,
+                })
+            }
+            navigate('/');
         }
-        navigate('/');
     }
 
     return (
@@ -142,8 +159,10 @@ const PostForm = ({post, action}: PostFormProps) => {
                     <Button
                         type="submit"
                         className='shad-button_primary whitespace-nowrap'
+                        disabled={isLoadingCreate || isLoadingUpdate}
                     >
-                        Submit
+                        {(isLoadingCreate || isLoadingUpdate) && <Loader />}
+                        {action} Post
                     </Button>
                 </div>
             </form>
